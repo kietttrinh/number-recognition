@@ -39,3 +39,8 @@
 
 # debug information files
 *.dwo
+
+# Dataset folder & other files
+data/
+
+NOTE.txt
