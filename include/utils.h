@@ -10,5 +10,6 @@
 
 DataPoint<Matrix, Matrix> mnist_parser(const std::string& filepath, const std::string& label_str);
 int get_prediction(const Matrix& output);
+void print_prediction_probs(const Matrix& output);
 
 #endif //UTILS_H

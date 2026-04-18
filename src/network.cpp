@@ -5,7 +5,7 @@ NeuralNetwork::NeuralNetwork(std::vector<int> topology, double learning_rate) : 
 {
     // Z = W * X + b
     // {768, 64, 10}  
-    for (size_t i = 0; i < topology.size(); ++i)
+    for (size_t i = 0; i < topology.size() - 1; ++i)
     {
         weights.push_back(Matrix::random(topology[i + 1], topology[i]));
         biases.push_back(Matrix::random(topology[i + 1], 1));
@@ -54,7 +54,15 @@ double NeuralNetwork::calculateLoss(const Matrix& output, const Matrix& target)
 
 void NeuralNetwork::train(const Matrix& input, const Matrix& target)
 {
-    feedForward(input);
+    Matrix output = feedForward(input);
+
+    if (output.rows != target.rows || output.cols != target.cols) 
+    {
+        std::cerr << "Dimension Mismatch!" << std::endl;
+        std::cerr << "Output: " << output.rows << "x" << output.cols << std::endl;
+        std::cerr << "Target: " << target.rows << "x" << target.cols << std::endl;
+        throw std::runtime_error("The matrix's sizes don't match!");
+    }
     
     // Error = Predicted - Target
     Matrix currentError = layerOutputs.back().subtract(target);

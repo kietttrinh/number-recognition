@@ -42,5 +42,7 @@
 
 # Dataset folder & other files
 data/
+dataset/
+.vscode/
 
 NOTE.txt

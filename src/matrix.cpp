@@ -10,6 +10,7 @@ Matrix::Matrix(int r, int c) : rows(r), cols(c)
 
 void Matrix::print() const
 {
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; ++i)
     {    
         for (int j = 0; j < cols; ++j)
@@ -21,21 +22,18 @@ void Matrix::print() const
     
 }
 
-Matrix Matrix::random(int r, int c)
+Matrix Matrix::random(int r, int c) 
 {
     Matrix res(r, c);
-    static std::random_device rd;
-    static std::mt19937_64 generator(rd());
-    std::uniform_real_distribution<double> distribution(-1.0, 1.0);
-
-    for (int i = 0; i < r; ++i)
+    double scale = sqrt(2.0 / (c));
+    for (int i = 0; i < r; ++i) 
     {
-        for (int j = 0; j < c; ++j)
+        for (int j = 0; j < c; ++j) 
         {
-            res.data[i][j] = distribution(generator);
+            res.data[i][j] = (((double)rand() / RAND_MAX) * 2 - 1) * scale;
         }
     }
-
+    
     return res;
 }
 
@@ -47,6 +45,8 @@ Matrix Matrix::add(const Matrix &other) const
     }
 
     Matrix res(rows, cols);
+
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; ++i)
     {
         for (int j = 0; j < cols; ++j)
@@ -66,6 +66,8 @@ Matrix Matrix::subtract(const Matrix &other) const
     }
 
     Matrix res(rows, cols);
+
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; ++i)
     {
         for (int j = 0; j < cols; ++j)
@@ -87,6 +89,7 @@ Matrix Matrix::multiply(const Matrix &other) const
 
     Matrix res(rows, other.cols);
     
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; ++i)
     {
         for (int j = 0; j < other.cols; ++j)
@@ -104,6 +107,8 @@ Matrix Matrix::multiply(const Matrix &other) const
 Matrix Matrix::multiplyScalar(double scalar) const 
 {
     Matrix res(rows, cols);
+
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; i++) 
     {
         for (int j = 0; j < cols; j++) 
@@ -124,6 +129,7 @@ Matrix Matrix::multiplyElement(const Matrix &other) const
 
     Matrix res(rows, cols);
 
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; ++i)
     {
         for (int j = 0; j < cols; ++j)
@@ -139,6 +145,7 @@ Matrix Matrix::transpose() const
 {
     Matrix res(cols, rows);
 
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; ++i)
     {
         for (int j = 0; j < cols; ++j)
@@ -155,6 +162,7 @@ Matrix Matrix::map(double (*func)(double)) const
 {
     Matrix res(rows, cols);
 
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; ++i)
     {
         for (int j = 0; j < cols; ++j)
@@ -174,12 +182,14 @@ Matrix Matrix::applyConvolution(const Matrix &input, const Matrix &kernel) const
     Matrix output(outputRows, outputCols);
 
     // Loop 1 & 2
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < outputRows; ++i)
     {
         for (int j = 0; j < outputCols; ++j)
         {
             double sum = 0.0;
             // Loop 3 & 4
+            #pragma omp parallel for collapse(2)
             for (int ki = 0; ki < kernel.rows; ++ki)
             {
                 for (int kj = 0; kj < kernel.cols; ++kj)
@@ -217,16 +227,10 @@ Matrix Matrix::applySoftmax(const Matrix& m)
     return res;
 }
 
-Matrix Matrix::oneHot(int label, int num_classes)
+Matrix Matrix::oneHot(int label, int size) 
 {
-    if (label >= num_classes)
-    {
-        throw std::invalid_argument("The label don't match.");
-    }
-
-    Matrix res(num_classes, 1);
-    res.data[label][0] = 1.0;
-
+    Matrix res(size, 1);
+    for (int i = 0; i < size; ++i) res.data[i][0] = (i == label ? 1.0 : 0.0);
     return res;
 }
 
@@ -235,6 +239,8 @@ Matrix Matrix::flatten() const
     Matrix res(rows * cols, 1);
 
     int k = 0;
+
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; ++i)
     {
         for (int j = 0; j < cols; ++j)
@@ -254,6 +260,7 @@ Matrix Matrix::resize(int r, int c) const
     double rowRatio = (double)this->rows / r;
     double colRatio = (double)this->cols / c;
 
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < r; ++i)
     {
         for (int j = 0; j < c; ++j)

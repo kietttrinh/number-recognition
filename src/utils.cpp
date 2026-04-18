@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "../include/stb_image.h"
 #include "../include/utils.h"
 
 // // https://courses.cs.vt.edu/~masc1044/L17-Rotation/ScalingNN.html
@@ -16,37 +18,35 @@
 //     return resized;
 // }
 
-DataPoint<Matrix, Matrix> mnist_parser(const std::string& filepath, const std::string& label_str)
-{
-    std::ifstream file(filepath, std::ios::binary);
-    if (!file)
+DataPoint<Matrix, Matrix> mnist_parser(const std::string& filepath, const std::string& label_str) {
+    int width, height, channels;
+    
+    unsigned char* data = stbi_load(filepath.c_str(), &width, &height, &channels, 1);
+    
+    if (!data)
     {
-        throw std::runtime_error("Can't open file: " + filepath);
+        throw std::runtime_error("stb_image failure: " + std::string(stbi_failure_reason()) + " at " + filepath);
     }
 
-    int width, height; // original size
-    file.read(reinterpret_cast<char*>(&width), sizeof(int));
-    file.read(reinterpret_cast<char*>(&height), sizeof(int));
-
-    // 
     Matrix rawImg(height, width);
-    unsigned char pixel;
-    for (int i = 0; i < height; ++i)
+    for (int i = 0; i < height; ++i) 
     {
-        for (int j = 0; j < width; ++j)
+        for (int j = 0; j < width; ++j) 
         {
-            file.read(reinterpret_cast<char*>(&pixel), 1);
-
-            // Normalize [0, 1]
-            rawImg.data[i][j] = static_cast<double>(pixel) / 255.0;
+            rawImg.data[i][j] = static_cast<double>(data[i * width + j]) / 255.0;
         }
     }
-    file.close();
+
+    stbi_image_free(data);
 
     Matrix standardized = rawImg.resize(28, 28);
 
     Matrix features = standardized.flatten();
     Matrix label = Matrix::oneHot(std::stoi(label_str), 10);
+
+    // std::cout << "Raw: " << rawImg.rows << "x" << rawImg.cols 
+    //       << " | Resized: " << standardized.rows << "x" << standardized.cols 
+    //       << " | Flattened: " << features.rows << "x" << features.cols << std::endl;
 
     return {features, label};
 }
@@ -64,4 +64,16 @@ int get_prediction(const Matrix& output)
     }
 
     return predicted_digit;
+}
+
+void print_prediction_probs(const Matrix& output) 
+{
+    std::cout << "\n--- RESULTS ---\n";
+    for (int i = 0; i < output.rows; ++i) 
+    {
+        double percentage = output.data[i][0] * 100.0;
+        std::cout << i << ": " << std::fixed << std::setprecision(2) << percentage << "%";
+        if (i < output.rows - 1) std::cout << " | ";
+    }
+    std::cout << "\n----------------------\n";
 }
