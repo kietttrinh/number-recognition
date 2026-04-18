@@ -1,5 +1,5 @@
 # number-regconition
-number recognition but in C/C++ +
+number recognition but in C/C++
 
 
 ## Folder structure
