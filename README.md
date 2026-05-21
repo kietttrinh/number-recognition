@@ -1,4 +1,4 @@
-# number-regconition
+# number-recognition
 # Notice: I will update this file later if i really free.
 
 ## Folder structure
